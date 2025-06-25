@@ -9,10 +9,32 @@ app = Flask(__name__)
 
 async def scrape_tiktok_sound_async(sound_url):
     async with async_playwright() as p:
-        iphone = p.devices["iPhone 13 Pro"]
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(**iphone)
-        page = await context.new_page()
+    iphone = p.devices["iPhone 13 Pro"]
+    
+    # Step 1: Set headless=False to debug rendering issues
+    browser = await p.chromium.launch(headless=False)
+
+    context = await browser.new_context(**iphone)
+    page = await context.new_page()
+
+    try:
+        # Step 2: Longer timeouts to allow for rendering delays
+        await page.goto(sound_url, timeout=90000)
+        await page.wait_for_timeout(12000)  # wait to allow full JS load
+
+        # Screenshot for debug
+        await page.screenshot(path="mobile_debug.png", full_page=True)
+
+        # Step 3 (optional): Save raw HTML to inspect rendering
+        html = await page.content()
+        with open("debug_page.html", "w", encoding="utf-8") as f:
+            f.write(html)
+
+        soup = BeautifulSoup(html, "html.parser")
+        text = soup.get_text()
+
+        # ... rest of your scraping logic (title, ugc_count etc.)
+
 
         try:
             await page.goto(sound_url, timeout=60000)
