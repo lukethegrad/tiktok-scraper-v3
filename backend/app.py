@@ -9,23 +9,22 @@ app = Flask(__name__)
 async def scrape_tiktok_sound_async(sound_url):
     async with async_playwright() as p:
         iphone = p.devices["iPhone 13 Pro"]
-        browser = await p.chromium.launch(headless=True)  # Set back to headless for server
+        browser = await p.chromium.launch(headless=False)
         context = await browser.new_context(**iphone)
         page = await context.new_page()
 
         try:
             await page.goto(sound_url, timeout=90000)
             await page.wait_for_timeout(12000)
-
-            # Save screenshot for debugging
             await page.screenshot(path="mobile_debug.png", full_page=True)
-
-            # Save raw HTML (optional for debug)
             html = await page.content()
+
             with open("debug_page.html", "w", encoding="utf-8") as f:
                 f.write(html)
 
-            # Try extracting the title
+            soup = BeautifulSoup(html, "html.parser")
+            text = soup.get_text()
+
             try:
                 title = await page.locator("h1").first.inner_text()
                 if not title.strip():
@@ -36,10 +35,7 @@ async def scrape_tiktok_sound_async(sound_url):
                 except:
                     title = "Title not found"
 
-            # Try extracting UGC count
             try:
-                soup = BeautifulSoup(html, "html.parser")
-                text = soup.get_text()
                 match = re.search(r"([\d\.]+)([KM]?)\s+videos", text)
                 if match:
                     num = float(match.group(1))
@@ -57,6 +53,7 @@ async def scrape_tiktok_sound_async(sound_url):
 
         await browser.close()
         return {"title": title, "ugc_count": ugc_count}
+
 
 
 @app.route("/scrape", methods=["GET"])
