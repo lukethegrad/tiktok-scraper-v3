@@ -10,8 +10,8 @@ if sound_url:
     with st.spinner("Scraping TikTok data..."):
         try:
             # Replace this with your current ngrok tunnel URL
-            ngrok_url = "https://ca5a-34-91-169-86.ngrok-free.app"
-            endpoint = f"{ngrok_url}/scrape"
+            backend_url = "https://backend-quiet-wave-4398.fly.dev"
+            endpoint = f"{backend_url}/scrape"
             response = requests.get(endpoint, params={"sound_url": sound_url})
             data = response.json()
 
