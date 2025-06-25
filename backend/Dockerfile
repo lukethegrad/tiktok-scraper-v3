@@ -1,29 +1,28 @@
-# Use slim Python base image
+# Use the official Python slim image
 FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for Playwright
+# Install dependencies required by Playwright
 RUN apt-get update && apt-get install -y \
-    wget gnupg \
-    libglib2.0-0 libnss3 libgconf-2-4 libfontconfig1 libxss1 \
-    libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
-    libxcomposite1 libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 \
-    libpangocairo-1.0-0 libx11-xcb1 libxext6 libxi6 libxrandr2 \
-    libxtst6 --no-install-recommends && rm -rf /var/lib/apt/lists/*
+    wget gnupg curl \
+    libglib2.0-0 libnss3 libgconf-2-4 libfontconfig1 \
+    libxss1 libasound2 libxtst6 libxrandr2 \
+    libxdamage1 libxcomposite1 libxfixes3 libxkbcommon0 \
+    --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Copy local files into container
+# Copy app files
 COPY . .
 
-# Install Python dependencies
+# Install Python packages
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Install Playwright Chromium
-RUN playwright install chromium
+# Install Playwright and its dependencies
+RUN playwright install --with-deps
 
-# Expose port 8080 (used by Fly.io)
+# Expose the Flask port
 EXPOSE 8080
 
-# Start the Flask app
+# Run the Flask app
 CMD ["python", "app.py"]
