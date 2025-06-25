@@ -12,12 +12,12 @@ async def scrape_tiktok_sound_async(sound_url):
 
         try:
             await page.goto(sound_url, timeout=60000)
-            await page.wait_for_timeout(8000)  # JS render time
+            await page.wait_for_timeout(8000)  # Wait for JS-rendered elements
 
-            # Screenshot for debug
+            # Screenshot for debugging (can be removed if not needed)
             await page.screenshot(path="mobile_debug.png", full_page=True)
 
-            # Title (fallbacks)
+            # Extract title
             try:
                 title = await page.locator("h1").first.inner_text()
                 if not title.strip():
@@ -28,7 +28,7 @@ async def scrape_tiktok_sound_async(sound_url):
                 except:
                     title = "Title not found"
 
-            # UGC Count (flexible)
+            # Extract UGC count from full page text
             try:
                 html = await page.content()
                 soup = BeautifulSoup(html, "html.parser")
