@@ -9,34 +9,30 @@ app = Flask(__name__)
 async def scrape_tiktok_sound_async(sound_url):
     async with async_playwright() as p:
         iphone = p.devices["iPhone 13 Pro"]
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(**iphone)
         page = await context.new_page()
 
         try:
-            await page.goto(sound_url, timeout=90000)
-            await page.wait_for_timeout(12000)
+            await page.goto(sound_url, timeout=60000)
+            await page.wait_for_timeout(8000)
+
             await page.screenshot(path="mobile_debug.png", full_page=True)
-            html = await page.content()
 
-            with open("debug_page.html", "w", encoding="utf-8") as f:
-                f.write(html)
-
-            soup = BeautifulSoup(html, "html.parser")
-            text = soup.get_text()
-
-            # -------- FIXED: Added missing except block here --------
             try:
                 title = await page.locator("h1").first.inner_text()
                 if not title.strip():
                     raise Exception("Empty h1")
-            except Exception:
+            except:
                 try:
                     title = await page.title()
-                except Exception:
+                except:
                     title = "Title not found"
 
             try:
+                html = await page.content()
+                soup = BeautifulSoup(html, "html.parser")
+                text = soup.get_text()
                 match = re.search(r"([\d\.]+)([KM]?)\s+videos", text)
                 if match:
                     num = float(match.group(1))
@@ -55,8 +51,9 @@ async def scrape_tiktok_sound_async(sound_url):
         await browser.close()
         return {"title": title, "ugc_count": ugc_count}
 
+
 @app.route("/scrape", methods=["GET"])
-def scrape_endpoint():
+def scrape_route():
     sound_url = request.args.get("sound_url")
     if not sound_url:
         return jsonify({"error": "Missing sound_url parameter"}), 400
@@ -65,6 +62,7 @@ def scrape_endpoint():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
