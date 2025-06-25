@@ -25,14 +25,15 @@ async def scrape_tiktok_sound_async(sound_url):
             soup = BeautifulSoup(html, "html.parser")
             text = soup.get_text()
 
+            # -------- FIXED: Added missing except block here --------
             try:
                 title = await page.locator("h1").first.inner_text()
                 if not title.strip():
                     raise Exception("Empty h1")
-            except:
+            except Exception:
                 try:
                     title = await page.title()
-                except:
+                except Exception:
                     title = "Title not found"
 
             try:
@@ -54,8 +55,6 @@ async def scrape_tiktok_sound_async(sound_url):
         await browser.close()
         return {"title": title, "ugc_count": ugc_count}
 
-
-
 @app.route("/scrape", methods=["GET"])
 def scrape_endpoint():
     sound_url = request.args.get("sound_url")
@@ -66,7 +65,6 @@ def scrape_endpoint():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
