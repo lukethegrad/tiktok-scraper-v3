@@ -1,7 +1,10 @@
- import asyncio
+import asyncio
+from flask import Flask, request, jsonify
 from playwright.async_api import async_playwright
 import re
 from bs4 import BeautifulSoup
+
+app = Flask(__name__)
 
 async def scrape_tiktok_sound_async(sound_url):
     async with async_playwright() as p:
@@ -12,12 +15,10 @@ async def scrape_tiktok_sound_async(sound_url):
 
         try:
             await page.goto(sound_url, timeout=60000)
-            await page.wait_for_timeout(8000)  # JS render time
+            await page.wait_for_timeout(8000)
 
-            # Screenshot for debug
             await page.screenshot(path="mobile_debug.png", full_page=True)
 
-            # Title (fallbacks)
             try:
                 title = await page.locator("h1").first.inner_text()
                 if not title.strip():
@@ -28,12 +29,10 @@ async def scrape_tiktok_sound_async(sound_url):
                 except:
                     title = "Title not found"
 
-            # UGC Count (flexible)
             try:
                 html = await page.content()
                 soup = BeautifulSoup(html, "html.parser")
                 text = soup.get_text()
-
                 match = re.search(r"([\d\.]+)([KM]?)\s+videos", text)
                 if match:
                     num = float(match.group(1))
@@ -50,7 +49,20 @@ async def scrape_tiktok_sound_async(sound_url):
             ugc_count = str(e)
 
         await browser.close()
-        return {
-            "title": title,
-            "ugc_count": ugc_count
-        }
+        return {"title": title, "ugc_count": ugc_count}
+
+
+@app.route("/scrape", methods=["GET"])
+def scrape_route():
+    sound_url = request.args.get("sound_url")
+    if not sound_url:
+        return jsonify({"error": "Missing sound_url parameter"}), 400
+    try:
+        result = asyncio.run(scrape_tiktok_sound_async(sound_url))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
