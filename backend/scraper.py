@@ -16,6 +16,9 @@ async def scrape_tiktok_sound_async(sound_url):
             
             # Save screenshot for inspection
             await page.screenshot(path="debug_full.png", full_page=True)
+            print("✅ Screenshot saved as debug_full.png")
+        except Exception as e:
+            print(f"❌ Failed to save screenshot: {e}")
             
             # Dump a portion of the HTML to logs
             html = await page.content()
