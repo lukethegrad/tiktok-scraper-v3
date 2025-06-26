@@ -1,7 +1,8 @@
 import os
 import requests
 
-APIFY_TOKEN = os.environ.get("apify_api_a1tnukWTeeLLlQhdqVMdqf0aXrKOXy0XH5K2")
+APIFY_TOKEN = os.environ.get("APIFY_TOKEN")
+
 
 def fetch_top_videos_from_apify(sound_url, max_videos=5):
     if not APIFY_TOKEN:
