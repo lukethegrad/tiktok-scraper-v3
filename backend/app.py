@@ -1,72 +1,27 @@
 import asyncio
-from playwright.async_api import async_playwright
-import re
-from bs4 import BeautifulSoup
+from flask import Flask, request, jsonify, send_file
+from scraper import scrape_tiktok_sound_async
 
-async def scrape_tiktok_sound_async(sound_url):
-    async with async_playwright() as p:
-        iphone = p.devices["iPhone 13 Pro"]
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(**iphone)
-        page = await context.new_page()
+app = Flask(__name__)
 
-        try:
-            await page.goto(sound_url, timeout=60000)
-            await page.wait_for_timeout(8000)
+@app.route("/scrape", methods=["GET"])
+def scrape_route():
+    sound_url = request.args.get("sound_url")
+    if not sound_url:
+        return jsonify({"error": "Missing sound_url parameter"}), 400
 
-            # 🧹 Dismiss popups
-            try:
-                cookie_button = page.locator("button:has-text('Accept')").first
-                if await cookie_button.is_visible():
-                    await cookie_button.click()
-                    await page.wait_for_timeout(1000)
-            except:
-                pass
+    try:
+        result = asyncio.run(scrape_tiktok_sound_async(sound_url))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-            try:
-                close_app_button = page.locator("button:has-text('×')").first
-                if await close_app_button.is_visible():
-                    await close_app_button.click()
-                    await page.wait_for_timeout(1000)
-            except:
-                pass
+@app.route("/screenshot", methods=["GET"])
+def get_screenshot():
+    try:
+        return send_file("debug_full.png", mimetype="image/png")
+    except Exception as e:
+        return jsonify({"error": f"Screenshot not available: {e}"}), 500
 
-            await page.wait_for_timeout(4000)
-            await page.screenshot(path="debug_full.png", full_page=True)
-
-            # Title
-            try:
-                title = await page.locator("h1").first.inner_text()
-            except:
-                title = await page.title()
-
-            # HTML and UGC count
-            html = await page.content()
-            soup = BeautifulSoup(html, "html.parser")
-            text = soup.get_text()
-
-            match_ugc = re.search(r"([\d\.]+)([KM]?)\s+videos", text)
-            if match_ugc:
-                num = float(match_ugc.group(1))
-                suffix = match_ugc.group(2)
-                multiplier = {"K": 1_000, "M": 1_000_000}.get(suffix, 1)
-                ugc_count = int(num * multiplier)
-            else:
-                ugc_count = "UGC count not found"
-
-            return {
-                "title": title,
-                "ugc_count": ugc_count,
-                "total_views": "View count not found",
-                "top_videos": []
-            }
-
-        except Exception as e:
-            return {
-                "title": "Error",
-                "ugc_count": str(e),
-                "total_views": str(e),
-                "top_videos": []
-            }
-        finally:
-            await browser.close()
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
