@@ -38,6 +38,8 @@ async def scrape_tiktok_sound_async(sound_url):
             # Title
             try:
                 title = await page.locator("h1").first.inner_text()
+                if not title.strip():
+                    raise Exception("Empty h1")
             except:
                 try:
                     title = await page.title()
@@ -64,16 +66,20 @@ async def scrape_tiktok_sound_async(sound_url):
             return {
                 "title": title,
                 "ugc_count": ugc_count,
-                "total_views": "View count not found",
+                "total_views": "View count not found",  # We may enrich this later
                 "top_videos": top_videos
             }
 
         except Exception as e:
+            # Even if Playwright fails, still try to fetch top videos from Apify
+            top_videos = await fetch_top_videos_from_apify(sound_url)
+
             return {
                 "title": "Error",
                 "ugc_count": str(e),
                 "total_views": str(e),
-                "top_videos": []
+                "top_videos": top_videos
             }
+
         finally:
             await browser.close()
