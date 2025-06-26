@@ -39,7 +39,10 @@ async def scrape_tiktok_sound_async(sound_url):
             try:
                 title = await page.locator("h1").first.inner_text()
             except:
-                title = await page.title()
+                try:
+                    title = await page.title()
+                except:
+                    title = "Title not found"
 
             # HTML and UGC count
             html = await page.content()
