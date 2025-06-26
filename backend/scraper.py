@@ -45,6 +45,21 @@ async def scrape_tiktok_sound_async(sound_url):
             except Exception as e:
                 ugc_count = f"Error parsing count: {e}"
 
+        # Inside your try block after extracting `ugc_count`, add:
+
+            try:
+                match = re.search(r"([\d\.]+)([KM]?)\s+views", text)
+                if match:
+                    num = float(match.group(1))
+                    suffix = match.group(2)
+                    multiplier = {"K": 1_000, "M": 1_000_000}.get(suffix, 1)
+                    total_views = int(num * multiplier)
+                else:
+                    total_views = "Total views not found"
+            except Exception as e:
+                total_views = f"Error parsing views: {e}"
+
+
         except Exception as e:
             title = "Page load failed"
             ugc_count = str(e)
@@ -52,5 +67,7 @@ async def scrape_tiktok_sound_async(sound_url):
         await browser.close()
         return {
             "title": title,
-            "ugc_count": ugc_count
+            "ugc_count": ugc_count,
+            "total_views": total_views
         }
+
