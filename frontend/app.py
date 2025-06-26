@@ -9,7 +9,7 @@ sound_url = st.text_input("TikTok Sound URL:")
 if sound_url:
     with st.spinner("Scraping TikTok data..."):
         try:
-            # Replace this with your current ngrok tunnel URL
+            # Replace this with your Fly.io endpoint
             backend_url = "https://backend-quiet-wave-4398.fly.dev"
             endpoint = f"{backend_url}/scrape"
             response = requests.get(endpoint, params={"sound_url": sound_url})
@@ -21,6 +21,7 @@ if sound_url:
                 st.success("✅ Scrape successful!")
                 st.write(f"**Title:** {data['title']}")
                 st.write(f"**UGC Videos:** {data['ugc_count']}")
+                st.write(f"**Total Views:** {data['total_views']}")  # ← ✅ Add this line
 
         except Exception as e:
             st.error(f"Unexpected error: {e}")
