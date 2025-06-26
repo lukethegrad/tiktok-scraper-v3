@@ -56,6 +56,7 @@ async def scrape_tiktok_sound_async(sound_url):
             else:
                 ugc_count = "UGC count not found"
 
+            # Apify fallback (not needed in this successful path, but ready for later)
             return {
                 "title": title,
                 "ugc_count": ugc_count,
@@ -64,12 +65,13 @@ async def scrape_tiktok_sound_async(sound_url):
             }
 
         except Exception as e:
+            top_videos = await fetch_top_videos_from_apify(sound_url)
             return {
                 "title": "Error",
                 "ugc_count": str(e),
                 "total_views": str(e),
-                top_videos = fetch_top_videos_from_apify(sound_url)
-
+                "top_videos": top_videos
             }
+
         finally:
             await browser.close()
