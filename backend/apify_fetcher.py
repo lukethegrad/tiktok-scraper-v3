@@ -1,33 +1,27 @@
 import os
-import httpx
+import asyncio
+from apify_client import ApifyClient
 
 async def fetch_top_videos_from_apify(sound_url):
-    api_token = os.environ.get("APIFY_TOKEN")
-    if not api_token:
+    token = os.environ.get("APIFY_TOKEN")
+    if not token:
         return [{"error": "APIFY_TOKEN not set"}]
 
-    actor_id = "clockworks/tiktok-sound-scraper"  # Replace if needed
-    run_url = f"https://api.apify.com/v2/actor-tasks/{actor_id}/run-sync-get-dataset-items?token={api_token}"
+    client = ApifyClient(token)
+    run_input = { "musics": [sound_url] }
+    run = await client.actor("clockworks/tiktok-sound-scraper").call(run_input=run_input)
+    dataset_id = run.get("defaultDatasetId")
+    if not dataset_id:
+        return [{"error": "No dataset returned"}]
 
-    payload = {
-        "startUrls": [{"url": sound_url}],
-        "maxVideos": 5
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(run_url, json=payload)
-            response.raise_for_status()
-            items = response.json()
-
-        top_videos = []
-        for item in items[:5]:
-            top_videos.append({
-                "username": item.get("authorUniqueId", "unknown"),
-                "views": item.get("stats", {}).get("playCount", "N/A"),
-                "posted": item.get("createTime", "N/A")
-            })
-        return top_videos
-
-    except Exception as e:
-        return [{"error": str(e)}]
+    items = client.dataset(dataset_id).iterate_items()
+    videos = []
+    async for item in items:
+        videos.append({
+            "username": item.get("authorMeta", {}).get("name", "unknown"),
+            "views": item.get("stats", {}).get("playCount", "N/A"),
+            "posted": item.get("createTimeISO", "N/A")
+        })
+        if len(videos) >= 5:
+            break
+    return videos
