@@ -2,6 +2,8 @@ import asyncio
 from playwright.async_api import async_playwright
 import re
 from bs4 import BeautifulSoup
+from apify_fetcher import fetch_top_videos_from_apify
+
 
 async def scrape_tiktok_sound_async(sound_url):
     async with async_playwright() as p:
@@ -66,7 +68,8 @@ async def scrape_tiktok_sound_async(sound_url):
                 "title": "Error",
                 "ugc_count": str(e),
                 "total_views": str(e),
-                "top_videos": []
+                top_videos = fetch_top_videos_from_apify(sound_url)
+
             }
         finally:
             await browser.close()
