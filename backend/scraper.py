@@ -42,7 +42,7 @@ async def scrape_tiktok_sound_async(sound_url):
             else:
                 ugc_count = "UGC count not found"
 
-            # 🎯 NEW: Total views
+            # Total views (may not be present)
             match_views = re.search(r"([\d\.]+)([KM]?)\s+views", text)
             if match_views:
                 num = float(match_views.group(1))
@@ -52,14 +52,52 @@ async def scrape_tiktok_sound_async(sound_url):
             else:
                 total_views = "View count not found"
 
+            # 🎯 New: Scrape top 5 videos
+            video_cards = await page.locator("div[data-e2e='browse-video-item']").all()
+            top_videos = []
+
+            for video in video_cards[:5]:
+                try:
+                    video_link = await video.locator("a").first.get_attribute("href")
+                    video_url = f"https://www.tiktok.com{video_link}"
+
+                    vid_page = await context.new_page()
+                    await vid_page.goto(video_url)
+                    await vid_page.wait_for_timeout(5000)
+
+                    # Account name
+                    username = await vid_page.locator("div[data-e2e='browse-username']").inner_text()
+
+                    # Views
+                    views_text = await vid_page.locator("strong[data-e2e='video-views']").inner_text()
+                    view_match = re.search(r"([\d\.]+)([KM]?)", views_text)
+                    views = int(float(view_match.group(1)) * {"K": 1_000, "M": 1_000_000}.get(view_match.group(2), 1)) if view_match else None
+
+                    # Post date
+                    date_locator = vid_page.locator("span[data-e2e='browser-nickname']")
+                    date_posted = await date_locator.nth(1).inner_text() if await date_locator.count() > 1 else "Date not found"
+
+                    top_videos.append({
+                        "username": username,
+                        "views": views,
+                        "date_posted": date_posted,
+                        "video_url": video_url
+                    })
+
+                    await vid_page.close()
+                except Exception:
+                    continue
+
         except Exception as e:
             title = "Page load failed"
             ugc_count = str(e)
             total_views = str(e)
+            top_videos = []
 
         await browser.close()
         return {
             "title": title,
             "ugc_count": ugc_count,
-            "total_views": total_views  # 🎯 include this
+            "total_views": total_views,
+            "top_videos": top_videos  # 🎯 return the new data
         }
