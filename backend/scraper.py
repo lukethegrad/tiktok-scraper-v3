@@ -61,9 +61,34 @@ async def scrape_tiktok_sound_async(sound_url):
                     title = "Title not found"
 
             # HTML for scraping
-            html = await page.content()
-            soup = BeautifulSoup(html, "html.parser")
-            text = soup.get_text()
+            top_videos = []
+            video_cards = await page.locator("div[data-e2e='sound-video-item']").all()
+            for card in video_cards[:5]:
+                try:
+                    username = await card.locator("a").first.get_attribute("href")
+                    username = username.split("/")[-1] if username else "unknown"
+                except:
+                    username = "unknown"
+            
+                try:
+                    views_text = await card.inner_text()
+                    match = re.search(r"([\d\.]+)([KM]?) views", views_text)
+                    if match:
+                        num = float(match.group(1))
+                        suffix = match.group(2)
+                        multiplier = {"K": 1_000, "M": 1_000_000}.get(suffix, 1)
+                        views = int(num * multiplier)
+                    else:
+                        views = "N/A"
+                except:
+                    views = "N/A"
+            
+                top_videos.append({
+                    "username": username,
+                    "views": views,
+                    "posted": "N/A"  # still to implement
+                })
+
 
             # UGC count
             match_ugc = re.search(r"([\d\.]+)([KM]?)\s+videos", text)
