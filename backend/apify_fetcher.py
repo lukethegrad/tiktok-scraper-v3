@@ -6,7 +6,7 @@ async def fetch_top_videos_from_apify(sound_url):
     if not api_token:
         return [{"error": "APIFY_TOKEN not set"}]
 
-    actor_id = "lukegb/tiktok-scraper"  # Replace if needed
+    actor_id = "clockworks/tiktok-sound-scraper"  # Replace if needed
     run_url = f"https://api.apify.com/v2/actor-tasks/{actor_id}/run-sync-get-dataset-items?token={api_token}"
 
     payload = {
