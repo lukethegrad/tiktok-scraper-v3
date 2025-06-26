@@ -12,7 +12,15 @@ async def scrape_tiktok_sound_async(sound_url):
 
         try:
             await page.goto(sound_url, timeout=60000)
-            await page.wait_for_timeout(8000)
+            await page.wait_for_timeout(12000)  # 12s wait for full JS render
+            
+            # Save screenshot for inspection
+            await page.screenshot(path="debug_full.png", full_page=True)
+            
+            # Dump a portion of the HTML to logs
+            html = await page.content()
+            print(html[:3000])  # Print first 3000 characters to Fly logs
+
 
             # Scroll slowly to trigger video loading
             for i in range(3):
