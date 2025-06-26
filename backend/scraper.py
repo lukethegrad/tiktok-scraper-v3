@@ -13,7 +13,28 @@ async def scrape_tiktok_sound_async(sound_url):
         page_loaded = False
         try:
             await page.goto(sound_url, timeout=60000)
-            await page.wait_for_timeout(12000)  # Allow time for JS to render
+            await page.wait_for_timeout(8000)  # initial load
+
+            # 🧹 Try to dismiss cookie pop-up and "Open App" modal
+            try:
+                cookie_button = page.locator("button:has-text('Accept')").first
+                if await cookie_button.is_visible():
+                    await cookie_button.click()
+                    await page.wait_for_timeout(1000)
+                    print("✅ Dismissed cookie popup")
+            except:
+                print("⚠️ No cookie popup found")
+
+            try:
+                close_app_button = page.locator("button:has-text('×')").first
+                if await close_app_button.is_visible():
+                    await close_app_button.click()
+                    await page.wait_for_timeout(1000)
+                    print("✅ Dismissed 'Open in App' modal")
+            except:
+                print("⚠️ No app modal found")
+
+            await page.wait_for_timeout(4000)  # buffer after modal cleanup
             page_loaded = True
         except Exception as e:
             print(f"❌ Page failed to load: {e}")
@@ -31,7 +52,6 @@ async def scrape_tiktok_sound_async(sound_url):
                 await page.mouse.wheel(0, 3000)
                 await page.wait_for_timeout(3000)
 
-            # Optional second screenshot
             await page.screenshot(path="mobile_debug.png", full_page=True)
 
             # Title
