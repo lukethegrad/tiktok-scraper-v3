@@ -16,11 +16,13 @@ def scrape_route():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+
 @app.route("/screenshot", methods=["GET"])
 def get_screenshot():
     try:
         return send_file("debug_full.png", mimetype="image/png")
     except Exception as e:
         return jsonify({"error": f"Screenshot not available: {e}"}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
