@@ -94,6 +94,10 @@ async def scrape_tiktok_sound_async(sound_url):
             total_views = str(e)
             top_videos = []
 
+
+        print("\n===== HTML DUMP START =====\n")
+        print(html)
+        print("\n===== HTML DUMP END =====\n")
         await browser.close()
         return {
             "title": title,
