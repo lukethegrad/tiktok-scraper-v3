@@ -10,12 +10,11 @@ async def scrape_tiktok_sound_async(sound_url):
         context = await browser.new_context(**iphone)
         page = await context.new_page()
 
-        page_loaded = False
         try:
             await page.goto(sound_url, timeout=60000)
-            await page.wait_for_timeout(8000)  # initial load
+            await page.wait_for_timeout(8000)
 
-            # 🧹 Try to dismiss cookie pop-up and "Open App" modal
+            # 🧹 Dismiss modals
             try:
                 cookie_button = page.locator("button:has-text('Accept')").first
                 if await cookie_button.is_visible():
@@ -34,19 +33,15 @@ async def scrape_tiktok_sound_async(sound_url):
             except:
                 print("⚠️ No app modal found")
 
-            await page.wait_for_timeout(4000)  # buffer after modal cleanup
-            page_loaded = True
-        except Exception as e:
-            print(f"❌ Page failed to load: {e}")
+            await page.wait_for_timeout(4000)
 
-        # Always try saving a screenshot, whether page loaded or not
-        try:
-            await page.screenshot(path="debug_full.png", full_page=True)
-            print("✅ Screenshot saved as debug_full.png")
-        except Exception as e:
-            print(f"❌ Screenshot save failed: {e}")
+            # ✅ Screenshot always taken early for debugging
+            try:
+                await page.screenshot(path="debug_full.png", full_page=True)
+                print("✅ Screenshot saved as debug_full.png")
+            except Exception as e:
+                print(f"❌ Screenshot save failed: {e}")
 
-        try:
             # Scroll to trigger lazy loading
             for i in range(3):
                 await page.mouse.wheel(0, 3000)
@@ -65,7 +60,7 @@ async def scrape_tiktok_sound_async(sound_url):
                 except:
                     title = "Title not found"
 
-            # Full HTML for soup
+            # HTML for scraping
             html = await page.content()
             soup = BeautifulSoup(html, "html.parser")
             text = soup.get_text()
