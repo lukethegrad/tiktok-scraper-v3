@@ -4,7 +4,6 @@ import re
 from bs4 import BeautifulSoup
 from apify_fetcher import fetch_top_videos_from_apify
 
-
 async def scrape_tiktok_sound_async(sound_url):
     async with async_playwright() as p:
         iphone = p.devices["iPhone 13 Pro"]
@@ -56,22 +55,22 @@ async def scrape_tiktok_sound_async(sound_url):
             else:
                 ugc_count = "UGC count not found"
 
-            # Apify fallback (not needed in this successful path, but ready for later)
+            # 🔁 Pull top videos from Apify
+            top_videos = await fetch_top_videos_from_apify(sound_url)
+
             return {
                 "title": title,
                 "ugc_count": ugc_count,
                 "total_views": "View count not found",
-                "top_videos": []
+                "top_videos": top_videos
             }
 
         except Exception as e:
-            top_videos = await fetch_top_videos_from_apify(sound_url)
             return {
                 "title": "Error",
                 "ugc_count": str(e),
                 "total_views": str(e),
-                "top_videos": top_videos
+                "top_videos": []
             }
-
         finally:
             await browser.close()
