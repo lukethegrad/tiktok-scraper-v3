@@ -12,24 +12,18 @@ async def scrape_tiktok_sound_async(sound_url):
 
         try:
             await page.goto(sound_url, timeout=60000)
-            await page.wait_for_timeout(12000)  # 12s wait for full JS render
-            
-            # Save screenshot for inspection
+            await page.wait_for_timeout(12000)
+
+            # Screenshot to verify render
             await page.screenshot(path="debug_full.png", full_page=True)
             print("✅ Screenshot saved as debug_full.png")
-        except Exception as e:
-            print(f"❌ Failed to save screenshot: {e}")
-            
-            # Dump a portion of the HTML to logs
-            html = await page.content()
-            print(html[:3000])  # Print first 3000 characters to Fly logs
 
-
-            # Scroll slowly to trigger video loading
+            # Scroll to trigger lazy loading
             for i in range(3):
                 await page.mouse.wheel(0, 3000)
                 await page.wait_for_timeout(3000)
 
+            # Optional second screenshot
             await page.screenshot(path="mobile_debug.png", full_page=True)
 
             # Title
@@ -43,6 +37,7 @@ async def scrape_tiktok_sound_async(sound_url):
                 except:
                     title = "Title not found"
 
+            # Full HTML for soup
             html = await page.content()
             soup = BeautifulSoup(html, "html.parser")
             text = soup.get_text()
@@ -67,9 +62,9 @@ async def scrape_tiktok_sound_async(sound_url):
             else:
                 total_views = "View count not found"
 
-            # 🆕 Top 5 videos
+            # Top 5 videos
             top_videos = []
-            video_blocks = soup.select("div[data-e2e='sound-video-item']")  # These may vary by TikTok version
+            video_blocks = soup.select("div[data-e2e='sound-video-item']")
             for block in video_blocks[:5]:
                 try:
                     user = block.select_one("a").get("href").split("/")[-1]
@@ -92,10 +87,11 @@ async def scrape_tiktok_sound_async(sound_url):
                 top_videos.append({
                     "username": user,
                     "views": views,
-                    "posted": "N/A"  # Date parsing TBD
+                    "posted": "N/A"
                 })
 
         except Exception as e:
+            print(f"❌ Scrape failed: {e}")
             title = "Page load failed"
             ugc_count = str(e)
             total_views = str(e)
