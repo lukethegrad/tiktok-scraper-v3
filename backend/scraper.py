@@ -82,4 +82,5 @@ async def scrape_tiktok_sound_async(sound_url):
             }
 
         finally:
+            await context.close()
             await browser.close()
