@@ -3,6 +3,7 @@ import httpx
 import re
 
 async def fetch_top_videos_from_apify(sound_url):
+    print("🎯 DEBUG: Apify fetcher is running with sound_id =", sound_id)
     token = os.environ.get("APIFY_TOKEN")
     if not token:
         return [{"error": "APIFY_TOKEN not set"}]
