@@ -22,6 +22,8 @@ async def fetch_top_videos_from_apify(sound_url: str, max_results: int = 5):
             run_resp = await client.post(run_url, json=payload, headers=headers)
             run_resp.raise_for_status()
             run_data = run_resp.json()
+            print("Run data from Apify:", run_data)
+
             dataset_id = run_data.get("defaultDatasetId")
 
             if not dataset_id:
