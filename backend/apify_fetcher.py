@@ -19,13 +19,18 @@ async def fetch_top_videos_from_apify(sound_url):
             run_data = run_resp.json()
             dataset_id = run_data.get("defaultDatasetId")
             if not dataset_id:
+                print("❌ No dataset ID returned from Apify run")
                 return [{"error": "No dataset returned"}]
+
+            print("✅ Apify run completed. Dataset ID:", dataset_id)
 
             # 2. Fetch dataset items
             dataset_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items?clean=true"
             dataset_resp = await client.get(dataset_url, headers=headers)
             dataset_resp.raise_for_status()
             items = dataset_resp.json()
+
+            print(f"✅ Retrieved {len(items)} items from Apify dataset")
 
             top_videos = []
             for item in items[:5]:
@@ -38,4 +43,5 @@ async def fetch_top_videos_from_apify(sound_url):
             return top_videos
 
         except Exception as e:
+            print("❌ Exception during Apify fetch:", str(e))
             return [{"error": str(e)}]
