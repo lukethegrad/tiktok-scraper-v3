@@ -1,5 +1,5 @@
 flask
+httpx
 playwright
 beautifulsoup4
-httpx>=0.27.0
 
